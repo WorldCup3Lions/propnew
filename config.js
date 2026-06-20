@@ -4,7 +4,7 @@
 
 window.DAILY_CONFIG = {
 
-    date: "2026-06-19",
+    date: "2026-06-20",
     lockTime: "24:00",
     timezone: "America/New_York",
 
