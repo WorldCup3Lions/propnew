@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Props</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Background atmosphere -->
+    <div class="bg-blob" style="width:500px;height:500px;background:rgba(201,162,39,0.07);top:-10%;left:-10%;"></div>
+    <div class="bg-blob" style="width:400px;height:400px;background:rgba(34,197,94,0.04);bottom:-5%;right:-10%;"></div>
+    <div class="bg-blob" style="width:300px;height:300px;background:rgba(239,68,68,0.03);top:50%;left:60%;"></div>
+
+    <!-- Toast notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Username modal -->
+    <div id="usernameModal" class="modal-overlay">
+        <div class="modal-box text-center">
+            <h2 class="text-2xl font-bold mb-2" style="color:var(--accent);">Welcome to Daily Props</h2>
+            <p class="text-sm mb-5" style="color:var(--muted);">Pick a username to get started</p>
+            <input id="usernameInput" type="text" maxlength="16" placeholder="Your username..." class="modal-input">
+            <button id="usernameSubmit" class="modal-btn-primary">Let's Go</button>
+        </div>
+    </div>
+
+    <!-- Lock-in confirmation modal -->
+    <div id="lockInModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 class="text-xl font-bold mb-1" style="color:var(--accent);">Lock In Your Picks</h3>
+            <p class="text-sm mb-4" style="color:var(--muted);">You can't change these after locking in.</p>
+            <div id="lockInPicks" class="flex flex-col gap-2 mb-5"></div>
+            <div class="flex gap-3">
+                <button class="modal-btn-secondary flex-1" id="lockInCancel">Go Back</button>
+                <button class="modal-btn-primary flex-1" id="lockInConfirm">Lock In</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- App container -->
+    <div id="app">
+
+        <!-- Top bar -->
+        <header class="top-bar">
+            <div class="top-bar-inner">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-trophy" style="color:var(--accent);font-size:18px;"></i>
+                    <h1 class="top-logo">DAILY PROPS</h1>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="topDate" class="top-date"></span>
+                    <span id="topUser" class="top-user"></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- HOME SCREEN -->
+        <section id="homeScreen" class="screen active">
+            <div class="screen-inner">
+                <!-- Event highlight -->
+                <div class="event-card" id="eventCard">
+                    <div class="shimmer"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="live-dot"></span>
+                            <span id="eventSport" class="event-sport-label"></span>
+                        </div>
+                        <h2 id="eventTitle" class="event-title"></h2>
+                        <p id="eventSubtitle" class="event-subtitle"></p>
+                        <div class="event-meta">
+                            <span><i class="fa-regular fa-clock mr-1"></i><span id="eventTime"></span></span>
+                            <span><i class="fa-solid fa-location-dot mr-1"></i><span id="eventVenue"></span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lock countdown -->
+                <div id="lockCountdown" class="lock-countdown" style="display:none;"></div>
+
+                <!-- CTA area -->
+                <div id="homeCTA" class="home-cta"></div>
+
+                <!-- Quick stats -->
+                <div class="quick-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="qsDailyScore">0</div>
+                        <div class="stat-label">Today</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="qsWeeklyScore">0</div>
+                        <div class="stat-label">This Week</div>
+                    </div>
+                    <div class="stat-card stat-card-accent">
+                        <div class="stat-value" id="qsRank">--</div>
+                        <div class="stat-label">Rank</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PACK SCREEN -->
+        <section id="packScreen" class="screen">
+            <div class="pack-scene">
+                <div class="pack" id="packEl">
+                    <div class="pack-glow" id="packGlow"></div>
+                    <div class="pack-rays" id="packRays"></div>
+                    <img src="icon-400x560.png" alt="Daily Props Pack" class="pack-img" id="packImg">
+                    <div class="pack-overlay">
+                        <div class="pack-stripe mb-2"></div>
+                        <div class="pack-text-main">DAILY</div>
+                        <div class="pack-text-accent">PROPS</div>
+                        <div class="pack-stripe my-2"></div>
+                        <div class="pack-stars">&#9733;&#9733;&#9733;</div>
+                        <div class="pack-date-label" id="packDateLabel">JUL 11</div>
+                    </div>
+                </div>
+                <p id="packTapText" class="pack-tap-text">TAP TO OPEN</p>
+            </div>
+        </section>
+
+        <!-- SELECTION SCREEN -->
+        <section id="selectionScreen" class="screen">
+            <div class="screen-inner">
+                <!-- Lock timer on selection screen -->
+                <div id="selLockTimer" class="sel-lock-timer" style="display:none;"></div>
+
+                <div class="sel-header">
+                    <h2 class="sel-title">Choose 5 Props</h2>
+                    <button class="random-btn" id="randomBtn">
+                        <i class="fa-solid fa-shuffle"></i> Random 5
+                    </button>
+                </div>
+
+                <!-- Filters -->
+                <div class="filter-bar" id="filterBar"></div>
+
+                <!-- Props grid -->
+                <div class="props-grid" id="propsGrid"></div>
+            </div>
+        </section>
+
+        <!-- PICKS SCREEN -->
+        <section id="picksScreen" class="screen">
+            <div class="screen-inner">
+                <h2 class="picks-title">My Picks</h2>
+
+                <!-- Date navigation for past 7 days -->
+                <div class="date-nav" id="dateNav"></div>
+
+                <!-- Score summary -->
+                <div class="picks-score-bar" id="picksScoreBar">
+                    <div class="score-chip score-hit">
+                        <div class="score-val" id="picksHitPts">0</div>
+                        <div class="score-lbl">Hit</div>
+                    </div>
+                    <div class="score-chip score-pend">
+                        <div class="score-val" id="picksPendPts">0</div>
+                        <div class="score-lbl">Pending</div>
+                    </div>
+                    <div class="score-chip score-miss">
+                        <div class="score-val" id="picksMissPts">0</div>
+                        <div class="score-lbl">Missed</div>
+                    </div>
+                    <div class="score-chip score-total">
+                        <div class="score-val" id="picksTotalPts">0</div>
+                        <div class="score-lbl">Total</div>
+                    </div>
+                </div>
+
+                <!-- Past day event info -->
+                <div id="picksEventInfo" class="picks-event-info" style="display:none;"></div>
+
+                <!-- Pick cards -->
+                <div class="picks-list" id="picksList"></div>
+
+                <!-- No picks message -->
+                <div id="noPicksMsg" class="no-picks-msg" style="display:none;">
+                    <i class="fa-solid fa-box-open"></i>
+                    <p>No picks this day.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEADERBOARD SCREEN -->
+        <section id="leaderboardScreen" class="screen">
+            <div class="screen-inner">
+                <h2 class="lb-title">Leaderboard</h2>
+
+                <div class="lb-tabs">
+                    <button class="tab-btn active" data-lb="daily" id="lbTabDaily">Today</button>
+                    <button class="tab-btn" data-lb="weekly" id="lbTabWeekly">This Week</button>
+                </div>
+
+                <div id="lbList" class="lb-list"></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Selection counter bar -->
+    <div id="selBar" class="sel-bar">
+        <span id="selCount" class="sel-count">0/5 Selected</span>
+        <button id="lockInBtn" class="lock-in-btn" disabled>Lock In</button>
+    </div>
+
+    <!-- Bottom navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-screen="home" id="navHome">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </button>
+        <button class="nav-item" data-screen="picks" id="navPicks">
+            <i class="fa-solid fa-rectangle-list"></i>
+            <span>Picks</span>
+        </button>
+        <button class="nav-item" data-screen="leaderboard" id="navLb">
+            <i class="fa-solid fa-ranking-star"></i>
+            <span>Board</span>
+        </button>
+    </nav>
+
+    <!-- Load config first, then game logic -->
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
