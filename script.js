@@ -88,35 +88,46 @@ function updateCountdown() { var locked=isPicksLocked(),ms=getTimeUntilLock(),he
 
 // ── HOME ──
 // ── HOME ──
+// ── HOME ──
 async function renderHome() { 
     if(!getUserId()) return; 
     var e=window.DAILY_CONFIG.event; $('eventTitle').textContent=e.title; $('eventSport').textContent='BASKETBALL'; $('eventSubtitle').textContent=e.subtitle; $('eventTime').textContent=e.time; $('eventVenue').textContent=e.venue; $('topUserName').textContent=getUsername(); var d=new Date(getTodayKey()+'T12:00:00'); $('topDate').textContent=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); 
     
-    const pd=await getPicksFromDB(getTodayKey()); 
-    const op = hasPackOpenedToday() || pd.locked; 
-    const li=pd.locked, tl=isPicksLocked(); 
+    // Check today's data and global pack state
+    const pd = await getPicksFromDB(getTodayKey());
+    const op = hasPackOpenedToday() || pd.locked;
+    const li = pd.locked;
+    const tl = isPicksLocked(); 
     
-        var cta=$('homeCTA'); 
-    
+    var cta=$('homeCTA'); 
+
     if(li) {
-        // User locked in: Hide the top countdown timer, show green success CTA
+        // User locked in today: Hide the top countdown timer, show green success CTA
         $('lockCountdown').style.display = 'none'; 
         cta.innerHTML='<div class="cta-locked" style="color:var(--hit);"><i class="fa-solid fa-circle-check"></i> Picks locked in!</div>'; 
     } else if(tl) {
         // Time is locked but user didn't lock in: Hide the CTA entirely, let the red top bar be the only message
         cta.innerHTML=''; 
     } else if(!op) {
-        // Pack not opened yet
+        // Pack not opened today, show Open Pack button
         cta.innerHTML='<p class="cta-msg">Your pack is waiting.</p><button class="cta-btn" id="openPackBtn"><i class="fa-solid fa-box-open" style="margin-right:8px;"></i>Open Pack</button>';
         $('openPackBtn').addEventListener('click',startPackOpen);
     } else {
-        // Pack opened, still need to pick
-        cta.innerHTML='<p class="cta-msg" style="color:var(--accent);">Pack opened! Select your 5 props.</p><button class="cta-btn" id="choosePropsBtn"><i></i>Choose Props</button>';
+        // Pack opened, still need to pick for today
+        cta.innerHTML='<p class="cta-msg" style="color:var(--accent);">Pack opened! Select your 5 props.</p><button class="cta-btn" id="choosePropsBtn"><i class="fa-solid fa-hand-pointer" style="margin-right:8px;"></i>Choose Props</button>';
         $('choosePropsBtn').addEventListener('click',goToSelection);
-    } 
+    }
     
     let ts=0; 
-    if(li&&pd.pickProps) pd.pickIds.forEach(id=>{if(getPropStatus(id)==='hit'){const p=pd.pickProps.find(x=>x.id===id);if(p)ts+=p.points;}}); 
+    if(li && pd.pickProps) {
+        pd.pickIds.forEach(id => {
+            if(getPropStatus(id)==='hit'){
+                const p=pd.pickProps.find(x=>x.id===id);
+                if(p) ts+=p.points;
+            }
+        }); 
+    }
+    
     $('qsDailyScore').textContent=ts; 
     $('qsWeeklyScore').textContent=ts; 
     
@@ -227,22 +238,56 @@ function renderDateNav() { var days=getWeekDays(), nav=$('dateNav'), tk=getToday
 
 async function renderPicksForDate(dateKey) {
     var list=$('picksList'), noMsg=$('noPicksMsg'), evtInfo=$('picksEventInfo'), isToday=dateKey===getTodayKey(), teams=window.DAILY_CONFIG.teams;
-    var pd=await getPicksFromDB(dateKey), locked=pd.locked, picks=pd.pickIds||[], pp=pd.pickProps||[];
-    if(pd.event){evtInfo.style.display='block';evtInfo.innerHTML='<strong>'+pd.event.title+'</strong> — '+pd.event.subtitle;}else{evtInfo.style.display='none';}
-    if(!locked||!picks.length){list.innerHTML='';noMsg.style.display='block';noMsg.querySelector('p').textContent=isToday?'No picks yet today.':'No picks this day.';$('picksHitPts').textContent='0';$('picksPendPts').textContent='0';$('picksMissPts').textContent='0';$('picksTotalPts').textContent='0';return;}
-    noMsg.style.display='none'; var hp=0,pep=0,mp=0;
-    list.innerHTML=picks.map(function(id,i){
-        var prop=pp.find(p=>p.id===id); if(!prop) return '';
-        var status=getPropStatus(id,dateKey), tc=teams[prop.team]?teams[prop.team].color:'#c9a227';
+    
+    // Fetch the picks data for the specific date
+    var pd = await getPicksFromDB(dateKey);
+    var locked = pd.locked; 
+    var picks = pd.pickIds || []; 
+    var pp = pd.pickProps || [];
+
+    // If the picks data has an event saved, display it
+    if(pd.event){ 
+        evtInfo.style.display='block';
+        evtInfo.innerHTML='<strong>'+pd.event.title+'</strong> — '+pd.event.subtitle; 
+    } else { 
+        evtInfo.style.display='none'; 
+    }
+
+    // If no locked picks exist for this date
+    if(!locked || !picks.length){ 
+        list.innerHTML=''; 
+        noMsg.style.display='block'; 
+        noMsg.querySelector('p').textContent = isToday ? 'No picks yet today.' : 'No picks this day.'; 
+        $('picksHitPts').textContent='0'; 
+        $('picksPendPts').textContent='0'; 
+        $('picksMissPts').textContent='0'; 
+        $('picksTotalPts').textContent='0'; 
+        return; 
+    }
+
+    noMsg.style.display='none'; 
+    var hp=0, pep=0, mp=0;
+
+    list.innerHTML = picks.map(function(id, i){
+        var prop = pp.find(p => p.id === id); 
+        if(!prop) return '';
+        var status = getPropStatus(id, dateKey), tc = teams[prop.team] ? teams[prop.team].color : '#c9a227';
         var tl = prop.team === 'GAME' ? '' : prop.team + ' — ';
         var statusHtml='', rc='result-'+status;
+
         if(status==='hit'){statusHtml='<span class="status-badge status-hit"><i class="fa-solid fa-check"></i> Hit</span>';hp+=prop.points;}
         else if(status==='miss'){statusHtml='<span class="status-badge status-miss"><i class="fa-solid fa-xmark"></i> Miss</span>';mp+=prop.points;}
         else{statusHtml='<span class="status-badge status-pending"><i class="fa-solid fa-clock"></i> Pending</span>';pep+=prop.points;}
-        var ptsNote=status==='hit'?'<div class="pick-pts hit">+'+prop.points+' points</div>':'';
+
+        var ptsNote = status==='hit' ? '<div class="pick-pts hit">+'+prop.points+' points</div>' : '';
+
         return '<div class="pick-card '+rc+' card-enter" style="animation-delay:'+i*0.08+'s;"><div class="pick-meta"><div class="pick-meta-left"><span class="pick-sport-label">BASKETBALL</span><span class="pick-player-label" style="color:'+tc+';">'+tl+prop.player+'</span></div><div class="pick-meta-right"><span class="pick-pts-label">POINTS: '+prop.points+'</span>'+statusHtml+'</div></div><div class="pick-text">'+prop.line+'</div>'+ptsNote+'</div>';
     }).join('');
-    $('picksHitPts').textContent=hp; $('picksPendPts').textContent=pep; $('picksMissPts').textContent=mp; $('picksTotalPts').textContent=hp;
+
+    $('picksHitPts').textContent=hp; 
+    $('picksPendPts').textContent=pep; 
+    $('picksMissPts').textContent=mp; 
+    $('picksTotalPts').textContent=hp;
 }
 
 // ── LEADERBOARD ──
